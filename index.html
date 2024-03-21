@@ -10,35 +10,35 @@
 
   <body>
     <div class="Submission">
-        <label>
-            Type Agent
-        </label>
-        <input type="text" class="agentInput" id="Agent">
-        <label>
-          Mode of Payment
-        </label>
-        <select id="MOP">
-          <option>
-            GCASH
-          </option>
-          <option>STC</option>
-        </select>
-        <label>
-            Combinations
-        </label>
-        <textarea name="bets" id="Bets" cols="30" rows="10"></textarea>
-        <input class="submitButton"type="button" value="Submit" onclick="submit()">
-        <a onclick="jsonify(this)">Export JSON</a>
+      <label>
+          Type Agent
+      </label>
+      <input type="text" class="agentInput" id="Agent" required>
+      <label>
+        Mode of Payment
+      </label>
+      <form>
+        <input type="radio" id="gcash">
+        <label for="age1">GCASH</label><br>
+        <input type="radio" id="stc">
+        <label for="age2">STC</label>
+      </form>
+      <label>
+          Combinations
+      </label>
+      <textarea name="bets" id="Bets" cols="30" rows="10" required></textarea>
+      <input class="submitButton"type="button" value="Submit" onclick="submit()">
+      <a onclick="csvConvert(this)">Export CSV</a>
     </div>
     <div class="Table">
         <table id="table">
-            <tr>
+            <tr id="header">
                 <th style="width: 6%">#</th>
                 <th>Agent</th>
                 <th>Bettor</th>
-                <th>N1</th>
-                <th>N2</th>
-                <th>N3</th>
+                <th id="except">N1</th>
+                <th id="except">N2</th>
+                <th id="except">N3</th>
                 <th style="width: 15%">Amount</th>
                 <th>Type</th>
                 <th>Mode</th>
