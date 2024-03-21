@@ -35,13 +35,10 @@ function submit() {
         } else if (text.includes("=")) {
             let combination = text.substring(0, text.indexOf("="));
             combination = combinationValidation(combination);
-            combination = combinationValidation(combination);
             let type = (text.includes("S") || text.includes("s")) ? 'Straight' : 'Ramble';
             let amount = text.substring(text.indexOf("=") + 1, text.length - 1);
             let date = new Date();
             let newDate = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-            dictionary[Agent][currentName].push({'Combination': `${combination[0]}-${combination[1]}-${combination[2]}` ,'Type': type, 'Amount': amount, 'Date': newDate, 'Mode': mop});
-            jsonifyThis.push({'Agent': Agent, 'Bettor': currentName, 'N1': combination[0], 'N2': combination[1], 'N3': combination[2], 'Amount': amount, 'Type': type, 'Mode': mop, 'Combination': combination, 'Date': newDate});
             dictionary[Agent][currentName].push({'Combination': `${combination[0]}-${combination[1]}-${combination[2]}` ,'Type': type, 'Amount': amount, 'Date': newDate, 'Mode': mop});
             jsonifyThis.push({'Agent': Agent, 'Bettor': currentName, 'N1': combination[0], 'N2': combination[1], 'N3': combination[2], 'Amount': amount, 'Type': type, 'Mode': mop, 'Combination': combination, 'Date': newDate});
             numberOfBets++;
@@ -103,6 +100,8 @@ function combinationValidation(combination) {
         if (parseInt(combination[x]) || parseInt(combination[x]) === 0) { combinations += combination[x]; }
     }
     return combinations;
+}
+
 /*
 @Auchi B. A
 0-0-1=30S
