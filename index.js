@@ -1,13 +1,8 @@
-let numberOfBets
 let dictionary = {}
 let currentName
-let currentBetNumber = 1
 let agentBettors = {}
 let jsonifyThis = []
-
-/*
-- Change MOP (Dropdown) to Select Option
-*/
+let tabled_rows = []
 
 function submit() {
     const agentInput = document.getElementById('Agent')
@@ -27,7 +22,8 @@ function submit() {
         return
     }
 
-    dictionary[Agent] = {}
+    if (Object.keys(dictionary).length == 0) dictionary[Agent] = {}
+    else if (!Object.keys(dictionary).includes(Agent)) dictionary[Agent] = {}
     
     for (let line in Array) {
         let text = Array[line]
@@ -45,13 +41,12 @@ function submit() {
                 errorText += temp
                 break
             }
-            let type = (text.includes("S") || text.includes("s")) ? 'Straight' : 'Ramble'
+            let type = (text.includes("S") || text.includes("s")) ? 'S' : 'R'
             let amount = text.substring(3, text.length - 1)
             let date = new Date()
             let newDate = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
             dictionary[Agent][currentName].push({'Combination': `${text[0]}-${text[1]}-${text[2]}` ,'Type': type, 'Amount': amount, 'Date': newDate, 'Mode': mop})
             jsonifyThis.push({'Agent': Agent, 'Bettor': currentName, 'N1': text[0], 'N2': text[1], 'N3': text[2], 'Amount': amount, 'Type': type, 'Mode': mop, 'Combination': text, 'Date': newDate})
-            numberOfBets++
         }
     }
     if (errorText != "") {
@@ -70,22 +65,11 @@ function combinationValidation(combination) {
     return combinations
 }
 
-/*
-Get first 3 numbers in the string
-After getting those 3 numbers, end loop and initialize a variable's value to the rest of the string
-get the bet amount from that string
-
-@Auchi B. A
-0-01=30S
-01-5=50R
-0-0130S
-01-550R
-0-1-5=50R
-0-1-5=50R
-*/
-
 function table() {
+    let currentBetNumber = 1
     const table = document.getElementById('table')
+    table.innerHTML = "<tr id='header'><tr id='header'><th style='width: 6%'>#</th><th style='width: 15%'>Agent</th><th>Bettor</th><th id='except'>N1</th><th id='except'>N2</th><th id='except'>N3</th><th id='except'>Amount</th><th>Type</th><th>Mode</th><th>Date</th></tr>"
+    console.log(dictionary)
     for (agent in dictionary) {
         for (bettor in dictionary[agent]) {
             for (bet in dictionary[agent][bettor]) {
