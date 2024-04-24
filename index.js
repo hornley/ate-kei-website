@@ -3,19 +3,16 @@ let jsonifyThis = []
 let maxTableRows = 15  // Per Page
 let currentPage = 1
 let maxPages = 1
-const testing = true
+const testing = false
 
 /*
 Current Issues:
-Table Display Limit (Random) ***FIXED***
 Bettor Name resubmit will remove the last instance, could be fixed with, if this bettor already exists in that agent's db.
 When adding another bet from the same agent, after a different agent it should be at the lowest, instead of being with the others
 
 To add:
-Edit (DONE) or Delete/Remove
 
 Error Catching:
-None so far
 */
 
 class Bet {
@@ -35,13 +32,16 @@ function submit() {
     const textArea = document.getElementById('Bets')
     const combinationsText = textArea.value
     const Array = combinationsText.split(/\n/)
-    const Agent = agentInput.value
+    let Agent = agentInput.value
     const specialChars = `/[!@#$%^&*()_+\\[\]{};':"\\|,.<>\/?]+/;`
     let mop
     let errorText = ""
     let currentName
 
-    Agent = "a"
+    if (testing) {
+        Agent = "a"
+        mop = "STC"
+    }
     
 
     if (document.getElementById('gcash').checked) mop = "GCASH"
@@ -72,7 +72,7 @@ function submit() {
             let date = new Date()
             let newDate = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
             bets[Object.keys(bets).length + 1] = new Bet(Agent, currentName, [text[0], text[1], text[2]], amount, type, mop, newDate)
-            jsonifyThis.push({'Agent': Agent, 'Bettor': currentName, 'N1': text[0], 'N2': text[1], 'N3': text[2], 'Amount': amount, 'Type': type, 'Mode': mop, 'Combination': text, 'Date': newDate})
+            jsonifyThis.push({'Agent': Agent, 'Bettor': currentName, 'N1': text[0], 'N2': text[1], 'N3': text[2], 'Amount': amount, 'Type': type, 'Mode': mop, 'Combination': `${text.substring(0,3)}-${type}`, 'Date': newDate})
         }
     }
     if (errorText != "") {
@@ -87,7 +87,7 @@ function submit() {
 function table() {
     let currentTableRow = 1;
     const table = document.getElementById('table')
-    table.innerHTML = "<tr id='header'><tr id='header'><th style='width: 6%'>#</th><th style='width: 15%'>Agent</th><th>Bettor</th><th id='except'>N1</th><th id='except'>N2</th><th id='except'>N3</th><th id='except'>Amount</th><th>Type</th><th>Mode</th><th>Date</th><th>Action</th></tr>"
+    table.innerHTML = "<tr id='header'><tr id='header'><th style='width: 6%'>#</th><th style='width: 15%'>Agent</th><th>Bettor</th><th id='except'>N1</th><th id='except'>N2</th><th id='except'>N3</th><th style='width: 6%'  id='except'>Amount</th><th>Type</th><th>Mode</th><th>Date</th><th>Action</th></tr>"
     for (currentBet in bets) {
         if (currentBet <= (currentPage - 1) * maxTableRows) continue
         const { agent, bettor_name, combination, amount, bet_type, payment_mode, date } = bets[currentBet]
@@ -101,15 +101,20 @@ function table() {
             row.appendChild(cell)
         })
         const editCell = document.createElement('td')
+        const editIcon = document.createElement('img')
+        editIcon.setAttribute('src',  'edit.png')
+        const deleteIcon = document.createElement('img')
+        deleteIcon.setAttribute('src',  'delete.png')
         const editData = document.createElement('a')
         const deleteData = document.createElement('a')
-        editData.innerText = "Edit"
         editData.setAttribute('onclick', 'editData('+currentBet+')')
         editData.setAttribute('class', 'EditData')
-        deleteData.innerText = "X"
+        editData.appendChild(editIcon)
         deleteData.setAttribute('onclick', 'deleteData('+currentBet+')')
         deleteData.setAttribute('class', 'EditData')
+        deleteData.appendChild(deleteIcon)
         editCell.appendChild(editData)
+        editCell.innerHTML += " | "
         editCell.appendChild(deleteData)
         row.appendChild(editCell)
         table.appendChild(row)
@@ -166,11 +171,16 @@ function editData(betNumber) {
 }
 
 function deleteData(betNumber) {
-    const table = document.getElementById("table")
+    const xtable = document.getElementById("table")
     const row = document.getElementById("BetNumber"+betNumber)
-    table.removeChild(row)
+    xtable.removeChild(row)
     delete bets[betNumber]
-    console.log(bets)
+    for (let i = betNumber + 1; i <= Object.keys(bets).length + 1; i++) {
+        bets[i - 1] = bets[i]
+        delete bets[i]
+    }
+    maxPages = Math.ceil(Object.keys(bets).length / maxTableRows)
+    table()
 }
 
 /*
