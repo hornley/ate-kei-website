@@ -1,8 +1,34 @@
-let dictionary = {}
-let currentName
-let agentBettors = {}
+let bets = {}
 let jsonifyThis = []
-let tabled_rows = []
+let maxTableRows = 15  // Per Page
+let currentPage = 1
+let maxPages = 1
+const testing = true
+
+/*
+Current Issues:
+Table Display Limit (Random) ***FIXED***
+Bettor Name resubmit will remove the last instance, could be fixed with, if this bettor already exists in that agent's db.
+When adding another bet from the same agent, after a different agent it should be at the lowest, instead of being with the others
+
+To add:
+Edit (DONE) or Delete/Remove
+
+Error Catching:
+None so far
+*/
+
+class Bet {
+    constructor(agent, bettor_name, combination, amount, bet_type, payment_mode, date) {
+        this.agent = agent
+        this.bettor_name = bettor_name
+        this.combination = combination
+        this.amount = amount
+        this.bet_type = bet_type
+        this.payment_mode = payment_mode
+        this.date = date
+    }
+}
 
 function submit() {
     const agentInput = document.getElementById('Agent')
@@ -13,6 +39,10 @@ function submit() {
     const specialChars = `/[!@#$%^&*()_+\\[\]{};':"\\|,.<>\/?]+/;`
     let mop
     let errorText = ""
+    let currentName
+
+    Agent = "a"
+    
 
     if (document.getElementById('gcash').checked) mop = "GCASH"
     else if (document.getElementById('stc').checked) mop = "STC"
@@ -22,19 +52,15 @@ function submit() {
         return
     }
 
-    if (Object.keys(dictionary).length == 0) dictionary[Agent] = {}
-    else if (!Object.keys(dictionary).includes(Agent)) dictionary[Agent] = {}
-    
     for (let line in Array) {
         let text = Array[line]
         if (text.startsWith('@')) {
             currentName = text.substring(1)
-            dictionary[Agent][currentName] = []
         } else if (text != "") {
             temp = text
-            text = text.replace(/\s+/g, '');
-            text = text.replaceAll("-", "");
-            text = text.replaceAll("=", "");
+            text = text.replace(/\s+/g, '')
+            text = text.replaceAll("-", "")
+            text = text.replaceAll("=", "")
             const isSpecialCharsPresent = specialChars.split('').some(char => 
                 text.includes(char))
             if (isSpecialCharsPresent) {
@@ -44,8 +70,8 @@ function submit() {
             let type = (text.includes("S") || text.includes("s")) ? 'S' : 'R'
             let amount = text.substring(3, text.length - 1)
             let date = new Date()
-            let newDate = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-            dictionary[Agent][currentName].push({'Combination': `${text[0]}-${text[1]}-${text[2]}` ,'Type': type, 'Amount': amount, 'Date': newDate, 'Mode': mop})
+            let newDate = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+            bets[Object.keys(bets).length + 1] = new Bet(Agent, currentName, [text[0], text[1], text[2]], amount, type, mop, newDate)
             jsonifyThis.push({'Agent': Agent, 'Bettor': currentName, 'N1': text[0], 'N2': text[1], 'N3': text[2], 'Amount': amount, 'Type': type, 'Mode': mop, 'Combination': text, 'Date': newDate})
         }
     }
@@ -54,39 +80,97 @@ function submit() {
         return
     }
     textArea.value = ""
+    maxPages = Math.ceil(Object.keys(bets).length / maxTableRows)
     table()
 }
 
-function combinationValidation(combination) {
-    let combinations = ""
-    for (let x in combination) {
-        if (parseInt(combination[x]) || parseInt(combination[x]) === 0) { combinations += combination[x] }
+function table() {
+    let currentTableRow = 1;
+    const table = document.getElementById('table')
+    table.innerHTML = "<tr id='header'><tr id='header'><th style='width: 6%'>#</th><th style='width: 15%'>Agent</th><th>Bettor</th><th id='except'>N1</th><th id='except'>N2</th><th id='except'>N3</th><th id='except'>Amount</th><th>Type</th><th>Mode</th><th>Date</th><th>Action</th></tr>"
+    for (currentBet in bets) {
+        if (currentBet <= (currentPage - 1) * maxTableRows) continue
+        const { agent, bettor_name, combination, amount, bet_type, payment_mode, date } = bets[currentBet]
+        const rowData = [currentTableRow + (currentPage - 1) * maxTableRows, agent, bettor_name, combination[0], combination[1], combination[2], amount, bet_type, payment_mode, date]
+        const row = document.createElement('tr')
+        row.setAttribute('id', 'BetNumber'+currentTableRow)
+        rowData.forEach(data => {
+            const cell = document.createElement('td')
+            const cellText = document.createTextNode(data)
+            cell.appendChild(cellText)
+            row.appendChild(cell)
+        })
+        const editCell = document.createElement('td')
+        const editData = document.createElement('a')
+        const deleteData = document.createElement('a')
+        editData.innerText = "Edit"
+        editData.setAttribute('onclick', 'editData('+currentBet+')')
+        editData.setAttribute('class', 'EditData')
+        deleteData.innerText = "X"
+        deleteData.setAttribute('onclick', 'deleteData('+currentBet+')')
+        deleteData.setAttribute('class', 'EditData')
+        editCell.appendChild(editData)
+        editCell.appendChild(deleteData)
+        row.appendChild(editCell)
+        table.appendChild(row)
+        if (currentTableRow == maxTableRows) {
+            break
+        }
+        currentTableRow++
     }
-    return combinations
 }
 
-function table() {
-    let currentBetNumber = 1
-    const table = document.getElementById('table')
-    table.innerHTML = "<tr id='header'><tr id='header'><th style='width: 6%'>#</th><th style='width: 15%'>Agent</th><th>Bettor</th><th id='except'>N1</th><th id='except'>N2</th><th id='except'>N3</th><th id='except'>Amount</th><th>Type</th><th>Mode</th><th>Date</th></tr>"
-    console.log(dictionary)
-    for (agent in dictionary) {
-        for (bettor in dictionary[agent]) {
-            for (bet in dictionary[agent][bettor]) {
-                const { Combination, Type, Amount, Date, Mode } = dictionary[agent][bettor][bet]
-                const rowData = [currentBetNumber, agent, bettor, Combination[0], Combination[2], Combination[4], Amount, Type, Mode, Date]
-                const row = document.createElement('tr')
-                rowData.forEach(data => {
-                    const cell = document.createElement('td')
-                    const cellText = document.createTextNode(data)
-                    cell.appendChild(cellText)
-                    row.appendChild(cell)
-                });
-                table.appendChild(row)
-                currentBetNumber++
-            }
-        }
+function nextPage() {
+    if (currentPage >= maxPages) return;
+    currentPage++
+    const page = document.getElementById("PageNumber")
+    page.innerHTML = currentPage
+    table()
+}
+
+function previousPage() {
+    if (currentPage == 1) return;
+    currentPage--
+    const page = document.getElementById("PageNumber")
+    page.innerHTML = currentPage
+    table()
+}
+
+function editData(betNumber) {
+    const row = document.getElementById("BetNumber"+betNumber)
+    const editButton = row.getElementsByClassName('EditData')
+    if (row.className == "editing") {
+        row.children[1].innerHTML = row.children[1].children[0].value
+        row.children[2].innerHTML = row.children[2].children[0].value
+        row.children[3].innerHTML = row.children[3].children[0].value
+        row.children[4].innerHTML = row.children[4].children[0].value
+        row.children[5].innerHTML = row.children[5].children[0].value
+        row.children[6].innerHTML = row.children[6].children[0].value
+        row.children[7].innerHTML = row.children[7].children[0].value
+        return
     }
+    const agent = row.children[1]
+    const bettor = row.children[2]
+    const combination = [row.children[3], row.children[4], row.children[5]]
+    const amount = row.children[6]
+    const MOP = row.children[7]
+    row.children[1].innerHTML = `<input type="text" class="EditRowDatax" id="editAgent" value=${agent.textContent}>`
+    row.children[2].innerHTML = `<input type="text" class="EditRowDatax" id="editBettor" value=${bettor.textContent}>`
+    row.children[3].innerHTML = `<input type="text" class="EditRowData" id="editCombination1" value=${combination[0].textContent}>`
+    row.children[4].innerHTML = `<input type="text" class="EditRowData" id="editCombination2" value=${combination[1].textContent}>`
+    row.children[5].innerHTML = `<input type="text" class="EditRowData" id="editCombination3" value=${combination[2].textContent}>`
+    row.children[6].innerHTML = `<input type="text" class="EditRowData" id="editAmount" value=${amount.textContent}>`
+    row.children[7].innerHTML = `<input type="text" class="EditRowData" id="editMOP" value=${MOP.textContent}>`
+    row.setAttribute('class', 'editing')
+    editButton.innerText = "Save"
+}
+
+function deleteData(betNumber) {
+    const table = document.getElementById("table")
+    const row = document.getElementById("BetNumber"+betNumber)
+    table.removeChild(row)
+    delete bets[betNumber]
+    console.log(bets)
 }
 
 /*

@@ -44,8 +44,19 @@
                 <th>Type</th>
                 <th>Mode</th>
                 <th>Date</th>
+                <th>Actions</th>
             </tr>
         </table>
+        <div class="PageController">
+          <input type="button" value="Previous Page" onclick="previousPage()">
+          <h2 id="PageNumber">1</h2>
+          <input type="button" value="Next Page" onclick="nextPage()">
+        </div>
     </div>
+    <script type="text/javascript">
+      window.onbeforeunload = function() {
+          return "Dude, are you sure you want to leave? Think of the kittens!";
+      }
+    </script>
   </body>
 </html>
