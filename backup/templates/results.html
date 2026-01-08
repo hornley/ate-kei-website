@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encoded Betting Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+        }
+        ul {
+            padding: 0;
+            list-style-type: none;
+        }
+        li {
+            background-color: #f4f4f4;
+            margin: 5px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .btn {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Formatted Betting Results</h1>
+        <table style="width:100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background:#f0f0f0; text-align:left;">
+                    <th style="border:1px solid #ccc; padding:8px;">Agent</th>
+                    <th style="border:1px solid #ccc; padding:8px;">Bettor</th>
+                    <th style="border:1px solid #ccc; padding:8px;">N1</th>
+                    <th style="border:1px solid #ccc; padding:8px;">N2</th>
+                    <th style="border:1px solid #ccc; padding:8px;">N3</th>
+                    <th style="border:1px solid #ccc; padding:8px;">Bet</th>
+                    <th style="border:1px solid #ccc; padding:8px;">Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bet in formatted_bets %}
+                <tr>
+                    <td style="border:1px solid #ccc; padding:8px;">{{ bet.agent_name }}</td>
+                    <td style="border:1px solid #ccc; padding:8px;">{{ bet.bettor_name }}</td>
+                    <td style="border:1px solid #ccc; padding:8px;">{{ bet.bets[0] }}</td>
+                    <td style="border:1px solid #ccc; padding:8px;">{{ bet.bets[1] }}</td>
+                    <td style="border:1px solid #ccc; padding:8px;">{{ bet.bets[2] }}</td>
+                    <td style="border:1px solid #ccc; padding:8px;">{{ bet.bet_amount }}</td>
+                    <td style="border:1px solid #ccc; padding:8px;">{{ bet.bet_type }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+        <a href="/" class="btn">Go Back</a><br>
+        <form action="/export_csv" method="post" style="display:inline-block; margin-top:10px;">
+            <input type="hidden" name="bet_data" value="{{ bet_data if bet_data is defined else '' }}">
+            <input type="hidden" name="agent_name" value="{{ agent_name if agent_name is defined else '' }}">
+            <button type="submit" class="btn">Export to CSV</button>
+        </form>
+    </div>
+</body>
+</html>
+

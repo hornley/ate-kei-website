@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submitted Bets</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        h1 {
+            margin-top: 0;
+            text-align: center;
+        }
+        .actions {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .btn-danger {
+            background-color: #f44336;
+        }
+        .btn-danger:hover {
+            background-color: #da190b;
+        }
+        .btn-info {
+            background-color: #2196F3;
+        }
+        .btn-info:hover {
+            background-color: #0b7dda;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        .empty-state {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            padding: 40px;
+        }
+        .stats {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Submitted Bets</h1>
+        
+        <div class="actions">
+            <a href="/" class="btn">← Back to Home</a>
+            {% if submitted_bets %}
+            <a href="/export_submitted_bets" class="btn btn-info">Export All to CSV</a>
+            <form action="/reset_submitted_bets" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete all submitted bets? This cannot be undone.');">
+                <button type="submit" class="btn btn-danger">Reset All Bets</button>
+            </form>
+            {% endif %}
+        </div>
+
+        {% if submitted_bets %}
+        <div class="stats">
+            <strong>Total Submitted Bets:</strong> {{ total }}
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Agent</th>
+                    <th>Bettor</th>
+                    <th>N1</th>
+                    <th>N2</th>
+                    <th>N3</th>
+                    <th>Bet</th>
+                    <th>Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bet in submitted_bets %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ bet.agent_name }}</td>
+                    <td>{{ bet.bettor_name }}</td>
+                    <td>{{ bet.bets[0] }}</td>
+                    <td>{{ bet.bets[1] }}</td>
+                    <td>{{ bet.bets[2] }}</td>
+                    <td>{{ bet.bet_amount }}</td>
+                    <td>{{ bet.bet_type }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <p>No bets have been submitted yet.</p>
+            <p>Go back to the home page and submit some bets!</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encoder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .main-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            margin: auto;
+        }
+        .left-panel {
+            flex: 0 0 400px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .right-panel {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 1.5em;
+        }
+        h2 {
+            margin-top: 0;
+            font-size: 1.3em;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 300px;
+            font-family: monospace;
+        }
+        button, .btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+            margin-right: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        button:hover, .btn:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        .button-group {
+            margin-top: 15px;
+        }
+        hr {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="left-panel">
+            <h1>Enter Betting Data</h1>
+            
+            {% if success_message %}
+            <div style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                {{ success_message }}
+            </div>
+            {% endif %}
+            
+            <form action="/check_bets" method="post">
+                <label for="agent_name">Choose Agent:</label>
+                <select name="agent_name" id="agent_name">
+                    {% if agent_name is defined %}
+                        <option value="{{ agent_name }}" selected>{{ agent_name }}</option>
+                    {% endif %}
+                    {% for a in agents %}
+                        {% if not agent_name is defined or a != agent_name %}
+                        <option value="{{ a }}">{{ a }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+
+                <label for="bet_data">Paste Betting Data:</label>
+                <textarea name="bet_data" id="bet_data" required>{{ bet_data if bet_data is defined else '' }}</textarea>
+
+                <div class="button-group">
+                    <button type="submit" formaction="/check_bets">Check Bets</button>
+                    <button type="submit" formaction="/encode_betting_data">Submit / Encode</button>
+                </div>
+            </form>
+
+            <hr>
+
+            <form action="/export_csv" method="post">
+                <input type="hidden" name="bet_data" value="{{ bet_data if bet_data is defined else '' }}">
+                <input type="hidden" name="agent_name" value="{{ agent_name if agent_name is defined else '' }}">
+                <button type="submit" class="btn">Export Current to CSV</button>
+            </form>
+
+            <a href="/submitted_bets" class="btn" style="margin-top:10px; background-color:#2196F3;">View Submitted Bets</a>
+            <a href="/" class="btn" style="margin-top:10px;">Clear / Reset</a>
+        </div>
+
+        <div class="right-panel">
+            <h2>Formatted Betting Results</h2>
+            {% if formatted_bets %}
+            <p><strong>Total Bets:</strong> {{ formatted_bets|length }}</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Agent</th>
+                        <th>Bettor</th>
+                        <th>N1</th>
+                        <th>N2</th>
+                        <th>N3</th>
+                        <th>Bet</th>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bet in formatted_bets %}
+                    <tr>
+                        <td>{{ bet.agent_name }}</td>
+                        <td>{{ bet.bettor_name }}</td>
+                        <td>{{ bet.bets[0] }}</td>
+                        <td>{{ bet.bets[1] }}</td>
+                        <td>{{ bet.bets[2] }}</td>
+                        <td>{{ bet.bet_amount }}</td>
+                        <td>{{ bet.bet_type }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="color:#999; font-style:italic;">No bets parsed yet. Enter data on the left and click "Check Bets" or "Submit / Encode".</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+
