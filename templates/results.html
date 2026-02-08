@@ -51,8 +51,51 @@
             border-radius: 4px;
             box-sizing: border-box;
         }
+        /* Hidden native select (used for form submission) */
+        .hidden-select {
+            display: none;
+        }
+        /* Custom dropdown to control popup height */
+        .custom-select {
+            position: relative;
+            width: 100%;
+            margin-top: 5px;
+        }
+        .custom-select .trigger {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+        .custom-select .options {
+            position: absolute;
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            overflow: auto;
+            display: none;
+            /* Limit the dropdown popup to roughly half the viewport height */
+            max-height: 18vh;
+        }
+        .custom-select .option {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .custom-select .option:hover {
+            background: #f0f0f0;
+        }
+        .custom-select .option.focused {
+            background: #e6f2ff;
+        }
         textarea {
-            height: 300px;
+            height: 500px;
             font-family: monospace;
         }
         button, .btn {
@@ -105,7 +148,8 @@
             
             <form action="/check_bets" method="post">
                 <label for="agent_name">Choose Agent:</label>
-                <select name="agent_name" id="agent_name">
+                <!-- Keep native select (hidden) so form submission works normally -->
+                <select name="agent_name" id="agent_name" class="hidden-select">
                     {% if agent_name is defined %}
                         <option value="{{ agent_name }}" selected>{{ agent_name }}</option>
                     {% endif %}
@@ -115,6 +159,12 @@
                         {% endif %}
                     {% endfor %}
                 </select>
+
+                <!-- Custom dropdown UI (will mirror the native select) -->
+                <div class="custom-select" id="agent_name_custom" aria-haspopup="listbox">
+                    <div class="trigger" tabindex="0" aria-expanded="false" id="agent_name_trigger">Select an agent</div>
+                    <div class="options" role="listbox" id="agent_name_options"></div>
+                </div>
 
                 <label for="bet_data">Paste Betting Data:</label>
                 <textarea name="bet_data" id="bet_data" required>{{ bet_data if bet_data is defined else '' }}</textarea>
@@ -172,6 +222,166 @@
             {% endif %}
         </div>
     </div>
+    <script>
+        (function(){
+            var nativeSel = document.getElementById('agent_name');
+            var trigger = document.getElementById('agent_name_trigger');
+            var optsContainer = document.getElementById('agent_name_options');
+
+            if (!nativeSel || !trigger || !optsContainer) return;
+
+            // Populate custom options from native select
+            function populate(){
+                optsContainer.innerHTML = '';
+                var options = nativeSel.options;
+                for (var i=0;i<options.length;i++){
+                    var opt = options[i];
+                    var div = document.createElement('div');
+                    div.className = 'option';
+                    div.setAttribute('data-value', opt.value);
+                    div.setAttribute('role','option');
+                    div.textContent = opt.textContent;
+                    if (opt.selected) {
+                        trigger.textContent = opt.textContent;
+                        div.classList.add('selected');
+                    }
+                    div.addEventListener('click', function(e){
+                        var v = this.getAttribute('data-value');
+                        var text = this.textContent;
+                        // set native select
+                        nativeSel.value = v;
+                        // update trigger text
+                        trigger.textContent = text;
+                        closeOptions();
+                    });
+                    optsContainer.appendChild(div);
+                }
+            }
+
+            function openOptions(){
+                optsContainer.style.display = 'block';
+                trigger.setAttribute('aria-expanded','true');
+                // scroll selected into view
+                var sel = optsContainer.querySelector('.selected');
+                if (sel) sel.scrollIntoView({block:'start'});
+            }
+            function closeOptions(){
+                optsContainer.style.display = 'none';
+                trigger.setAttribute('aria-expanded','false');
+            }
+
+            // Toggle on trigger click
+            trigger.addEventListener('click', function(e){
+                var showing = optsContainer.style.display === 'block';
+                if (showing) closeOptions(); else openOptions();
+            });
+
+            // Incremental filtering with typed characters
+            var typedBuffer = '';
+            var typedTimeout = null;
+
+            function filterOptions(search){
+                var lower = search.toLowerCase();
+                var optionElements = optsContainer.querySelectorAll('.option');
+                var found = null;
+                var visibleCount = 0;
+
+                for (var i=0;i<optionElements.length;i++){
+                    var opt = optionElements[i];
+                    var txt = opt.textContent.trim().toLowerCase();
+                    // Match only when the option text starts with the typed string
+                    var matches = txt.indexOf(lower) === 0;
+
+                    if (matches){
+                        opt.style.display = '';
+                        visibleCount++;
+                        if (!found) found = opt; // first visible match
+                    } else {
+                        opt.style.display = 'none';
+                    }
+                }
+
+                // Scroll and focus first match
+                if (found){
+                    var prev = optsContainer.querySelector('.option.focused');
+                    if (prev) prev.classList.remove('focused');
+                    found.classList.add('focused');
+                    found.scrollIntoView({block:'start'});
+                }
+            }
+
+            function resetFilter(){
+                typedBuffer = '';
+                var optionElements = optsContainer.querySelectorAll('.option');
+                for (var i=0;i<optionElements.length;i++){
+                    optionElements[i].style.display = '';
+                }
+                var prev = optsContainer.querySelector('.option.focused');
+                if (prev) prev.classList.remove('focused');
+            }
+
+            // Keyboard support (open/close + incremental filtering)
+            trigger.addEventListener('keydown', function(e){
+                var key = e.key;
+                if (key === 'ArrowDown' || key === ' ') {
+                    e.preventDefault(); openOptions();
+                    return;
+                }
+                if (key === 'Escape') {
+                    resetFilter();
+                    closeOptions();
+                    return;
+                }
+                if (key === 'Enter') {
+                    // Select focused option
+                    var focused = optsContainer.querySelector('.option.focused');
+                    if (focused){
+                        focused.click();
+                    }
+                    return;
+                }
+                if (key === 'Backspace' && typedBuffer.length > 0){
+                    e.preventDefault();
+                    typedBuffer = typedBuffer.slice(0, -1);
+                    if (typedBuffer.length === 0){
+                        resetFilter();
+                    } else {
+                        filterOptions(typedBuffer);
+                    }
+                    openOptions();
+                    clearTimeout(typedTimeout);
+                    typedTimeout = setTimeout(resetFilter, 3000);
+                    return;
+                }
+                // Accumulate typed characters for filtering
+                if (key && key.length === 1 && /[\w\S]/.test(key)){
+                    e.preventDefault();
+                    typedBuffer += key;
+                    openOptions();
+                    filterOptions(typedBuffer);
+                    
+                    // Reset filter after 3 second of inactivity
+                    clearTimeout(typedTimeout);
+                    typedTimeout = setTimeout(resetFilter, 3000);
+                }
+            });
+
+            // Close when clicking outside
+            document.addEventListener('click', function(e){
+                if (!document.getElementById('agent_name_custom').contains(e.target)){
+                    closeOptions();
+                }
+            });
+
+            // Observe native select for changes (in case server pre-selects)
+            populate();
+
+            // Keep native select in sync if form or other code changes it
+            nativeSel.addEventListener('change', function(){
+                populate();
+            });
+        })();
+    </script>
 </body>
 </html>
 

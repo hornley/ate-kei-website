@@ -24,6 +24,14 @@
         .actions {
             margin-bottom: 20px;
             text-align: center;
+            /* Make actions sticky so buttons remain visible while scrolling */
+            position: sticky;
+            top: 20px; /* account for body padding */
+            z-index: 1200;
+            background: #fff;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.05);
         }
         .btn {
             padding: 10px 20px;
@@ -51,6 +59,13 @@
         .btn-info:hover {
             background-color: #0b7dda;
         }
+        .table-wrapper {
+            /* Limit table height and make contents scrollable */
+            max-height: 60vh;
+            overflow: auto;
+            border-radius: 4px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -64,6 +79,10 @@
         th {
             background: #f0f0f0;
             font-weight: bold;
+            /* Make header row stick to the top of the scrolling table wrapper */
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
         .empty-state {
             text-align: center;
@@ -76,6 +95,16 @@
             padding: 15px;
             border-radius: 5px;
             margin-bottom: 20px;
+        }
+        /* Make actions column narrow and buttons compact inside the table */
+        .actions-col {
+            width: 110px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .table-wrapper .btn {
+            padding: 6px 10px;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -98,7 +127,8 @@
             <strong>Total Submitted Bets:</strong> {{ total }}
         </div>
 
-        <table>
+        <div class="table-wrapper">
+            <table>
             <thead>
                 <tr>
                     <th>#</th>
@@ -109,6 +139,7 @@
                     <th>N3</th>
                     <th>Bet</th>
                     <th>Type</th>
+                    <th class="actions-col">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -122,10 +153,17 @@
                     <td>{{ bet.bets[2] }}</td>
                     <td>{{ bet.bet_amount }}</td>
                     <td>{{ bet.bet_type }}</td>
+                    <td class="actions-col">
+                        <form action="/delete_submitted_bet" method="post" style="display:inline;">
+                            <input type="hidden" name="index" value="{{ loop.index0 }}" />
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this bet? This cannot be undone.');">Delete</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
-        </table>
+            </table>
+        </div>
         {% else %}
         <div class="empty-state">
             <p>No bets have been submitted yet.</p>

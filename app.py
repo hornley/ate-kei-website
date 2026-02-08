@@ -265,6 +265,20 @@ async def export_submitted_bets():
     return StreamingResponse(iter([csv_bytes]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=all_submitted_bets.csv"})
 
 
+# Route to delete a single submitted bet by its index (zero-based)
+@app.post("/delete_submitted_bet")
+async def delete_submitted_bet(index: int = Form(...)):
+    try:
+        submitted_bets = load_submitted_bets()
+        if 0 <= index < len(submitted_bets):
+            # remove the specified bet and persist
+            removed = submitted_bets.pop(index)
+            save_submitted_bets(submitted_bets)
+            print(f"Removed submitted bet: {removed}")
+    except Exception as e:
+        print(f"Error deleting submitted bet at index {index}: {e}")
+    return RedirectResponse(url="/submitted_bets", status_code=303)
+
 # Route to reset/clear all submitted bets
 @app.post("/reset_submitted_bets")
 async def reset_submitted_bets():
